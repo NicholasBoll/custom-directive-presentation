@@ -1,0 +1,290 @@
+<!doctype html>
+<html ng-app="presentation">
+<head>
+  <meta charset="utf-8">
+  <title>Custom Directives</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/2.6.1/css/reveal.min.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/2.6.1/css/theme/default.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/2.6/lib/css/zenburn.css">
+  <link rel="stylesheet" href="css/app.css">
+
+  <script src="vendor/angular/angular.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/directives/example.js"></script>
+  <script src="js/directives/tooltip.js"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      <section class="present">
+        <h1>AngularJS Custom Directives</h1>
+        <p>by Nicholas Boll</p>
+      </section>
+      <section>
+        <h2>Who Am I?</h2>
+        <ul>
+          <li><a href="http://twitter.com/NicholasBoll">@NicholasBoll</a></li>
+          <li>I'm a Software Engineer at LogRhythm</li>
+          <li>I've been using AngularJS for about 6 months</li>
+        </ul>
+      </section>
+      <section>
+        <h2>What are directives?</h2>
+      </section>
+      <section>
+        <p>If you use Angular, you already use Directives (ex: ng-model)</p>
+        <nb-example language="html">
+          <div ng-init="message = 'Hello World!'">{{ message }}</div>
+          <input ng-model="message">
+        </nb-example>
+      </section>
+      <section>
+        <h2>Why make your own?</h2>
+        <p>Angular gives you many powerful directives</p>
+        <p class="fragment">jQuery, right?</p>
+      </section>
+      <section>
+        <h2>Directives are:</h2>
+        <ul>
+          <li class="fragment">A way to expand HTML to be more declaritive</li>
+          <li class="fragment">Components or behavior modifiers</li>
+          <li class="fragment">How AngularJS allows you to hook into the DOM</li>
+          <li class="fragment">Complicated</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Creating a directive:</h2>
+        <nb-example language="html">
+          <hello-world></hello-world>
+          <script>
+            angular.module('presentation')
+            .directive('helloWorld', function (/* dependencies */) {
+              // directive factories return a config object
+              return {
+                restrict: 'E',
+                link: function (scope, element, attrs) {
+                  element.text('Hello World!');
+                }
+              }
+            });
+          </script>
+        </nb-example>
+      </section>
+      <section>
+        <h2>Config object</h2>
+      </section>
+      <section>
+        <section>
+          <h3><code>restrict</code></h3>
+          <dl>
+            <dt>"E"</dt>
+            <dd>Element<pre><code><my-directive></my-directive></code></pre></dd>
+            <dt>"A"</dt>
+            <dd>Attribute<pre><code><div my-directive="exp"></div></code></pre></dd>
+            <dt>"C"</dt>
+            <dd>Class<pre><code><div class="my-directive: exp"></div></code></pre></dd>
+            <dt>"M"</dt>
+            <dd>Comment<pre><code><!-- directive: my-directive exp --></code></pre></dd>
+          </dl>
+        </section>
+        <section>
+          <h3>WTF?</h3>
+          <p>CSS classes? Comments?!</p>
+        </section>
+        <section>
+          <h3>Comment directives</h3>
+          <p>Mostly used internal for directives like <code>ng-repeat</code></p>
+          <p>This is because the Browser parses HTML into DOM and <em>then</em> Angular gets to it</p>
+          <p>Ex: <code>my-directive</code> creates a <code>td</code></p>
+        </section>
+        <section>
+          <nb-example language="html">
+            <table>
+              <tr>
+                <td-directive></td-directive>
+              </tr>
+            </table>
+            <table>
+              <tr>
+                <!-- directive: td-directive -->
+              </tr>
+            </table>
+            <script>
+              angular.module('presentation')
+              .directive('tdDirective', function () {
+                return {
+                  replace: true,
+                  template: '<td>Content</td>',
+                  restrict: 'EACM'
+                };
+              });
+            </script>
+          </nb-example>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3><code>priority</code></h3>
+          <p><code>Number</code></p>
+          <p>Tells the <code>compiler</code> what order to process directives</p>
+          <p>Higher numbers get processed first</p>
+        </section>
+        <section>
+          <nb-example language="html">
+            <ul ng-init="movies = ['Iron Man', 'Transformers', 'Superman']">
+              <li my-paging="movies" ng-repeat="movie in movies">{{ movie }}</li>
+            </ul>
+            <script>
+            angular.module('presentation')
+            .directive('myPaging', function () {
+              return {
+                priority: 1000,
+                link: function (scope, element, attrs) {
+                  var items = scope.$eval(attrs.myPaging);
+                  var itemsPerPage = 2;
+                  var pagableItems = angular.copy(items);
+
+                  function page (index) {
+                    items.length = 0;
+                    pagableItems.slice(index, index + itemsPerPage).forEach(function (item, index) {
+                      items.push(item);
+                    });
+                  }
+
+                  page(0);
+
+                  // Set up some UI for the next page
+                }
+              };
+            });
+            </script>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3><code>terminal</code></h3>
+          <p><code>Boolean</code></p>
+          <p>True means no further compiling will be done of lower priority or child directives</p>
+        </section>
+        <section>
+          <nb-example language="html">
+            <div ng-init="message = 'Hello World'">
+              Binding: {{ message }}
+              <div my-non-bindable>Non-binding: {{ message }}</div>
+            </div>
+            <script>
+            angular.module('presentation')
+            .directive('myNonBindable', function () {
+              return {
+                terminal: true
+              };
+            });
+            </script>
+          </nb-example>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3><code>scope</code></h3>
+          <p><code>Boolean</code> or <code>Object</code> hash</p>
+          <p>Set to <code>true</code> for a new scope</p>
+          <p>Set to <code>Object</code> hash for an <code>isolate</code> scope</p>
+        </section>
+        <section>
+          <nb-example language="html">
+            <div ng-init="message = 'Inherit Scope'">
+              <div>Normal scope: {{ message }}</div>
+              <div my-new-scope>New scope: {{ message }}</div>
+            </div>
+            <script>
+            angular.module('presentation')
+            .directive('myNewScope', function () {
+              return {
+                scope: true,
+                link: function (scope) {
+                  scope.message = "New Scope";
+                }
+              }
+            });
+            </script>
+          </nb-example>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h2>Example: #1</h2>
+          <h3>Tooltips</h3>
+        </section>
+        <section>
+          <h3>Plain HTML</h3>
+          <nb-example language="html">
+            <div>
+              <span title="I'm some tooltip">Hover over me!</span>
+            </div>
+          </nb-example>
+        </section>
+        <section>
+          <h3>Angular Tooltip</h3>
+          <nb-example>
+            <div>
+              <span nb-tooltip="I'm some tooltip">Hover over me!</span>
+            </div>
+          </nb-example>
+        </section>
+        <section>
+          <pre>
+            <code id="tooltipCode" class="javascript">
+  angular.module('presentation').directive('nbTooltip', function ($document, $compile) {
+
+    return {
+      scope: true,
+      link: function (scope, element, attrs) {
+        var tooltip = null;
+        var tooltipLinker = $compile('<div class="tooltip">{{ text }}</div>');
+
+        function showTooltip (event) {
+          tooltip = tooltipLinker(scope);
+          scope.text = attrs.nbTooltip;
+          scope.$digest();
+          tooltip.css({
+            top: event.y + 5 + 'px',
+            left: event.x + 5 + 'px'
+          });
+          $document.find('body').append(tooltip);
+        }
+
+        function hideTooltip (event) {
+          tooltip.remove();
+        }
+        element.on('mouseover', showTooltip);
+        element.on('mouseout', hideTooltip);
+
+        scope.$on('$destroy', function () {
+          element.off('mouseover', showTooltip);
+          element.off('mouseout', hideTooltip);
+        });
+      }
+    };
+  });
+            </code>
+          </pre>
+        </section>
+      </section>
+    </div>
+  </div>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/2.6.1/lib/js/head.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/2.6.1/js/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      dependencies: [
+        { src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/2.6.1/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+      ],
+      history: true
+    });
+  </script>
+</body>
+</html>

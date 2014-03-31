@@ -1,0 +1,24 @@
+
+.tooltip {
+	background: gray;
+	border: solid 1px darkgray;
+	border-radius: 4px;
+	padding: 3px;
+	position: absolute;
+	z-index: 100;
+}
+
+dl {
+	text-align: left;
+}
+
+dt {
+	clear: left;
+	float: left;
+	width: 10%;
+}
+
+dd {
+	float:left;
+	width: 80%;
+}
