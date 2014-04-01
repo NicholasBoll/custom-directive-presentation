@@ -190,15 +190,21 @@
       <section>
         <section>
           <h3><code>scope</code></h3>
-          <p><code>Boolean</code> or <code>Object</code> hash</p>
-          <p>Set to <code>true</code> for a new scope</p>
-          <p>Set to <code>Object</code> hash for an <code>isolate</code> scope</p>
+          <ul>
+            <li class="fragment"><code>Boolean</code> or <code>Object</code> hash</li>
+            <li class="fragment">Set to <code>true</code> for a new scope</li>
+            <li class="fragment">Set to <code>Object</code> hash for an <code>isolate</code> scope</li>
+            <li class="fragment">Scopes have prototypical inheritance</li>
+          </ul>
+        </section>
+        <section>
+          <h3>New Scope</h3>
         </section>
         <section>
           <nb-example language="html">
-            <div ng-init="message = 'Inherit Scope'">
-              <div>Normal scope: {{ message }}</div>
-              <div my-new-scope>New scope: {{ message }}</div>
+            <div ng-init="message = 'Inherit Scope'; foo = 'bar'">
+              <div>Normal scope: {{ message }}, {{ foo }}</div>
+              <div my-new-scope>New scope: {{ message }}, {{ foo }}</div>
             </div>
             <script>
             angular.module('presentation')
@@ -212,6 +218,260 @@
             });
             </script>
           </nb-example>
+        </section>
+        <section>
+          <h3>Isolate Scope</h3>
+          <dl>
+            <dt><code>=</code></dt>
+            <dd>Two-way binding between parent and local scope (sharing)</dd>
+            <dt><code>@</code></dt>
+            <dd>One-way (parent to local) binding by interpolation. Ex: <code ng-non-bindable>hello {{name}}</code></dd>
+            <dt><code>&</code></dt>
+            <dd>Provides a way to execute an expression in the context of a parent scope.</dd>
+          </dl>
+        </section>
+        <section>
+          <nb-example language="html">
+            <div ng-init="message = 'World'">
+              <div>Parent: {{ message }}</div>
+              <input ng-model="message">
+              <div my-isolate-scope one-way="Hello {{ message }}" two-way="message" expression="message = 'Jim'">
+                <div>One way: {{ oneWay }}</div>
+                <div>Two way: {{ twoWay }}</div>
+                <button ng-click="expression()">Expression</button>
+              </div>
+            </div>
+            <script>
+              angular.module('presentation')
+              .directive('myIsolateScope', function () {
+                return {
+                  template: [
+                    '<div>One way: <input ng-model="oneWay"></div>',
+                    '<div>Two way: <input ng-model="twoWay"></div>',
+                    '<div><button ng-click="expression()">expression</button></div>'
+                  ].join(''),
+                  scope: {
+                    oneWay: '@',
+                    twoWay: '=',
+                    expression: '&'
+                  }
+                };
+              });
+            </script>
+          </nb-example>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3><code>controller</code></h3>
+          <ul>
+            <li class="fragment">Actually more like a Directive Controller</li>
+            <li class="fragment">Should not contain DOM</li>
+            <li class="fragment">Should contain business logic and writing to local scope</li>
+            <li class="fragment">Should be unit-testable without DOM</li>
+            <li class="fragment">Defines an API for directive communication</li>
+          </ul>
+        </section>
+        <section>
+          <h3><code>require</code></h3>
+          <ul>
+            <li class="fragment"><code>String</code> or <code>String[]</code></li>
+            <li class="fragment">Require a directive controller from the current or parent element</li>
+            <li class="fragment"><code>(no prefix)</code> is current element, <code>^</code> is parent and <code>?</code> means optional</li>
+            <li class="fragment">Angular will pass required controllers as forth argument to linking function</li>
+          </ul>
+        </section>
+        <section>
+          <nb-example>
+            <parent-directive ng-init="message = 'Hello World'">
+              <child-directive ng-model="message"></child-directive>
+            </parent-directive>
+            <script>
+              angular.module('presentation')
+              .directive('parentDirective', function () {
+                return {
+                  restrict: 'E',
+                  transclude: true,
+                  template: '<div>Parent: {{ message }}</div><div ng-transclude></div>',
+                  controller: function ($scope) {
+                    this.setMessage = function () {
+                      $scope.message = 'Jim';
+                    };
+                  }
+                };
+              })
+              .directive('childDirective', function () {
+                return {
+                  restrict: 'E',
+                  template: '<div>Child: {{ message }}</div><button ng-click="setParentMessage()">Change</button>',
+                  require: [
+                    '^parentDirective', // required parentDirective controller
+                    '?ngModel' // optional ngModel controller
+                  ],
+                  link: function (scope, element, attrs, controllers) {
+                    var parentController = controllers[0];
+                    var ngModel = controllers[1];
+
+                    scope.setParentMessage = parentController.setMessage;
+                  }
+                }
+              })
+            </script>
+          </nb-example>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3><code>template</code></h3>
+          <ul>
+            <li class="fragment"><code>String</code> or <code>Function(tElement, tAttr)</code></li>
+            <li class="fragment">Replaces contents of directive with <code>HTML</code></li>
+            <li class="fragment">Migrates attributes and classes from old element</li>
+          </ul>
+        </section>
+        <section>
+          <h3><code>templateUrl</code></h3>
+          <ul>
+            <li class="fragment"><code>String</code></li>
+            <li class="fragment">Like <code>template</code>, but loaded from URL</li>
+            <li class="fragment">Loads asynchronously, suspends compile/link stages</li>
+            <li class="fragment">Use for dev, <code>$templateCache</code> for prod and testing</li>
+          </ul>
+        </section>
+        <section>
+          <h3><code>require</code></h3>
+          <ul>
+            <li class="fragment">Boolean</li>
+            <li class="fragment"><code>true</code> to replace the current element with template (must be 1 root element in template)</li>
+            <li class="fragment"><code>false</code> to replace contents of current element</li>
+          </ul>
+        </section>
+        <section>
+          <nb-example>
+            <my-template-directive class="someclass">
+              I will be replaced
+            </my-template-directive>
+            <my-replace-template-directive class="someclass">
+              I will also be replaced
+            </my-replace-template-directive>
+            <script>
+              angular.module('presentation')
+              .directive('myTemplateDirective', function () {
+                return {
+                  restrict: 'E',
+                  replace: false,
+                  template: '<div>Replaced by template</div>'
+                };
+              })
+              .directive('myReplaceTemplateDirective', function () {
+                return {
+                  restrict: 'E',
+                  replace: true,
+                  template: [
+                    '<div>',
+                      '<span>Replaced element as well</span>',
+                    '</div>'
+                  ].join('')
+                };
+              });
+            </script>
+          </nb-example>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3><code>transclude</code></h3>
+          <ul>
+            <li class="fragment"><code>Boolean</code></li>
+            <li class="fragment">Typically used with <code>ng-transclude</code> and an isolate <code>scope</code></li>
+            <li class="fragment">Makes it possible to make a widget with an isolate scope, but have transcluded content bound to parent scope</li>
+          </ul>
+        </section>
+        <section>
+          <h3>What?</h3>
+        </section>
+        <section>
+          <p>Think of a widget where your template is a picture frame and <code>ng-transclude</code> is the place where the picture goes</p>
+        </section>
+        <section>
+          <nb-example>
+            <div ng-init="message = 'Hello World'">
+              <my-panel panel-title="My Title">
+                <p>This content is transcluded like a picture!</p>
+                <p>{{ message }}</p>
+              </my-panel>
+            </div>
+            <script>
+              angular.module('presentation')
+              .directive('myPanel', function () {
+                return {
+                  restrict: 'E',
+                  scope: {
+                    localTitle: '@panelTitle'
+                  },
+                  transclude: true,
+                  template: [
+                    '<div class="panel">',
+                      '<div class="title">{{ localTitle }}{{ message }}</div>',
+                      '<div class="content" ng-transclude></div>',
+                    '</div>'
+                  ].join('')
+                };
+              });
+            </script>
+          </nb-example>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3><code>link</code></h3>
+          <ul>
+            <li class="fragment"><code>Function (scope, iElement, iAttributes, controller, transcludeFn)</code></li>
+            <li class="fragment"><code>Object { preLink: Function, postLink: Function}</code></li>
+            <li class="fragment">If <code>function</code>, it is a <code>postLink</code> function</li>
+            <li class="fragment">Use if no <code>compile</code> function is needed (most of the time)</li>
+            <li class="fragment"><code>controller</code> is a reference or array of references to required controllers (including controller of the directive if applicable)</li>
+            <li class="fragment">If <code>transclude</code> is true, <code>transcludeFn</code> will be a pre-bound transclude function for cloning (<code>ng-repeat</code>)</li>
+          </ul>
+        </section>
+        <section>
+          <h3><code>preLink</code></h3>
+          <ul>
+            <li class="fragment">Rarely used in practice - actually similar to <code>controller</code></li>
+            <li class="fragment">Used when you need to change a <code>scope</code>, but not <code>DOM</code></li>
+            <li class="fragment">Angular uses for <code>form</code> and <code>ngInit</code></li>
+          </ul>
+        </section>
+        <section>
+          <h3><code>postLink</code></h3>
+          <ul>
+            <li class="fragment">Can add <code>DOM</code> listeners and manipulate <code>DOM</code></li>
+            <li class="fragment">Most directive code will go here</li>
+          </ul>
+        </section>
+        <section>
+          <h3><code>compile</code></h3>
+          <ul>
+            <li class="fragment"><code>Function (tElement, tAttributes)</code></li>
+            <li class="fragment">Used to transform the <em>template</em> DOM</li>
+            <li class="fragment">Returns a <code>link</code> function or object</li>
+            <li class="fragment">Notice there is no <code>scope</code></li>
+          </ul>
+        </section>
+        <section>
+          <h3><code>compile</code> vs <code>link</code></h3>
+          <p>Think of <code>underscore</code> or <code>Handlebar</code> templates: you compile a string into a template function, then call the template function with data.</p>
+          <p>Handlebars:</p>
+          <pre><code ng-non-bindable>var template = Handlebars.compile('<div>{{ title }}</div>');
+var html = template({ title: 'My Title' });</code></pre>
+          <p>Angular:</p>
+          <pre><code ng-non-bindable>scope.title = 'My Title';
+var linkFn = $compile('<div>{{ title }}</div>');
+linkFn(scope);</code></pre>
+        </section>
+        <section>
+          <h3><code>compile</code> vs <code>link</code></h3>
+          <p><code>compile</code> is added for performance. It is only run once while link is run for each clone</p>
         </section>
       </section>
       <section>

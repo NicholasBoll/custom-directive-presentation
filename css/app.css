@@ -22,3 +22,37 @@ dd {
 	float:left;
 	width: 80%;
 }
+
+input, button {
+	font-size: 70%;
+	border: 1px solid lightblue;
+	border-radius: 0.3em;
+	padding: 0.2em;
+}
+
+button {
+	background-color: #428bca;
+	padding: 0.2em 0.5em;
+	color: white;
+}
+
+code {
+	text-transform: none !important;
+}
+
+.reveal .panel {
+	background: darkslategrey;
+	border: 2px solid black;
+	border-radius: 0.5em;
+}
+
+.panel .title {
+	background: lightblue;
+	color: black;
+	border-radius: 0.5em 0.5em 0 0;
+	padding: 0.3em;
+}
+
+.panel .content {
+	padding: 0.3em;
+}
