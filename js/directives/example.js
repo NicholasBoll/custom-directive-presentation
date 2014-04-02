@@ -13,8 +13,6 @@ angular.module('directives.example', []).directive('nbExample', function ($compi
     // priority higher than other directives
     priority: 1000,
 
-    // template: '<pre><code></code></pre><div></div>',
-
     // compile function - this will return a linking function
     compile: function (templateElement, templateAttributes) {
 

@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/2.6/lib/css/zenburn.css">
   <link rel="stylesheet" href="css/app.css">
 
-  <script src="vendor/angular/angular.js"></script>
+  <script src="//code.angularjs.org/1.2.15/angular.js"></script>
   <script src="js/app.js"></script>
   <script src="js/directives/example.js"></script>
   <script src="js/directives/tooltip.js"></script>
@@ -50,7 +50,7 @@
       <section>
         <h2>Directives are:</h2>
         <ul>
-          <li class="fragment">A way to expand HTML to be more declaritive</li>
+          <li class="fragment">A way to expand HTML to be more declarative</li>
           <li class="fragment">Components or behavior modifiers</li>
           <li class="fragment">How AngularJS allows you to hook into the DOM</li>
           <li class="fragment">Complicated</li>
@@ -125,6 +125,14 @@
             </script>
           </nb-example>
         </section>
+        <section>
+          <h3>Class directives</h3>
+          <p>I don't suggest using classes as directives. CSS classes are style-hooks and not obvious that behavior is being added.</p>
+        </section>
+        <section>
+          <h3>Note:</h3>
+          <p>IE8 can't parse Element directives without the help of the <code>document.createElement</code> hack. Stick with <code>attribute</code> directives for IE8 support.</p>
+        </section>
       </section>
       <section>
         <section>
@@ -162,6 +170,7 @@
               };
             });
             </script>
+          </nb-example>
         </section>
       </section>
       <section>
@@ -339,7 +348,7 @@
           </ul>
         </section>
         <section>
-          <h3><code>require</code></h3>
+          <h3><code>replace</code></h3>
           <ul>
             <li class="fragment">Boolean</li>
             <li class="fragment"><code>true</code> to replace the current element with template (must be 1 root element in template)</li>
@@ -475,9 +484,54 @@ linkFn(scope);</code></pre>
         </section>
       </section>
       <section>
+        <h2>General Rules</h2>
+        <ul>
+          <li class="fragment">Should be easy to use</li>
+          <li class="fragment">Should be modular and reusable by reducing concern</li>
+          <li class="fragment">Should only read scope. Controllers write scope</li>
+          <li class="fragment">Limit functionality to UI and UI behavior</li>
+          <li class="fragment">Controllers for inter-directive communication (doesn't mess with scope)</li>
+          <li class="fragment">Remember to clean up: <code>scope.$on('$destroy', ...</code></li>
+        </ul>
+      </section>
+      <section>
         <section>
-          <h2>Example: #1</h2>
-          <h3>Tooltips</h3>
+          <h2>API Considerations: Components</h2>
+          <ul>
+            <li>Components with config (Imperitive)</li>
+            <li>Components with transclude (Declaritive)</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Impertitive Component: <code>ng-grid</code></h3>
+          <iframe src="http://embed.plnkr.co/T6qaQX/preview" style="width: 30em; height: 30em;"></iframe>
+        </section>
+        <section>
+          <h3>Declaritive Component: <code>angular-table</code></h3>
+          <iframe src="http://embed.plnkr.co/yTQtZaOuTNGaU8HBtzQe/preview" style="width: 30em; height: 30em;"></iframe>
+        </section>
+        <section>
+          <h3>Imperative</h3>
+          <ul>
+            <li class="fragment">Imperative is nice if you want to control the template</li>
+            <li class="fragment">Makes for simple examples</li>
+            <li class="fragment">All functionality/use cases need to be supported in code and configured</li>
+            <li class="fragment">Much more isolated functionality</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Declarative</h3>
+          <ul>
+            <li class="fragment">Declarative is nice if you want components to be customized</li>
+            <li class="fragment">More daunting API to get started</li>
+            <li class="fragment">Gives consumers of your directive API building blocks to create apps</li>
+            <li class="fragment">Gives consumers a lot of power and flexibility through transclusion</li>
+          </ul>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h3>Tooltips example</h3>
         </section>
         <section>
           <h3>Plain HTML</h3>
@@ -497,42 +551,106 @@ linkFn(scope);</code></pre>
         </section>
         <section>
           <pre>
-            <code id="tooltipCode" class="javascript">
-  angular.module('presentation').directive('nbTooltip', function ($document, $compile) {
+            <code class="javascript">angular.module('presentation').directive('nbTooltip', function ($document, $compile) {
+  return {
+    scope: true,
+    link: function (scope, element, attrs) {
+      var tooltip = null;
+      var tooltipLinker = $compile('<div class="tooltip">{{ text }}</div>');
 
-    return {
-      scope: true,
-      link: function (scope, element, attrs) {
-        var tooltip = null;
-        var tooltipLinker = $compile('<div class="tooltip">{{ text }}</div>');
-
-        function showTooltip (event) {
-          tooltip = tooltipLinker(scope);
-          scope.text = attrs.nbTooltip;
-          scope.$digest();
-          tooltip.css({
-            top: event.y + 5 + 'px',
-            left: event.x + 5 + 'px'
-          });
-          $document.find('body').append(tooltip);
-        }
-
-        function hideTooltip (event) {
-          tooltip.remove();
-        }
-        element.on('mouseover', showTooltip);
-        element.on('mouseout', hideTooltip);
-
-        scope.$on('$destroy', function () {
-          element.off('mouseover', showTooltip);
-          element.off('mouseout', hideTooltip);
+      function showTooltip (event) {
+        tooltip = tooltipLinker(scope);
+        scope.text = attrs.nbTooltip;
+        scope.$digest();
+        tooltip.css({
+          top: event.y + 5 + 'px',
+          left: event.x + 5 + 'px'
         });
+        $document.find('body').append(tooltip);
       }
-    };
-  });
-            </code>
+
+      function hideTooltip (event) {
+        tooltip.remove();
+      }
+      element.on('mouseover', showTooltip);
+      element.on('mouseout', hideTooltip);
+
+      scope.$on('$destroy', function () {
+        element.off('mouseover', showTooltip);
+        element.off('mouseout', hideTooltip);
+      });
+    }
+  };
+});</code>
           </pre>
         </section>
+        <section>
+          <h3>Tooltip example</h3>
+          <ul>
+            <li>Shows use of separate compile and link steps by using the <code>$compile service</code> (used when compiling bootstrapped apps)</li>
+            <li>Shows how to add Angular compiled DOM after app is bootstrapped</li>
+            <li>Shows cleanup through <code>$destroy</code> event</li>
+          </ul>
+        </section>
+      </section>
+      <section>
+        <section>
+          <h2>Example Directive</h2>
+          <p>The directive used to power the examples in this presentation</p>
+        </section>
+        <section>
+          <pre>
+            <code class="javascript">angular.module('directives.example', []).directive('nbExample', function ($compile) {
+  return {
+
+    // create isolate scopes for examples
+    scope: {},
+
+    // Only match to element or attribute
+    restrict: 'EA',
+
+    // don't process any other directive
+    terminal: true,
+
+    // priority higher than other directives
+    priority: 1000,
+
+    // compile function - this will return a linking function
+    compile: function (templateElement, templateAttributes) {
+
+      /* compile the template. This will return a function that will create
+       * real DOM within a scope - kind of like underscore templates return
+       * a function that will operate on data
+       * We need more control for this template than providing a template
+       * attribute to the directive
+       */
+      var template = $compile('<div><h3>Example:</h3><pre><code></code></pre><div><h3>Output:</h3></div></div>');
+      
+      // Get the contents of the directive as a string for later use
+      var example = templateElement.html();
+
+      // Remove leading whitespaces and replace with a single return per line
+      var leadingWhitespace = example.match(/^\s+/)[0];
+      example = example.replace(new RegExp(leadingWhitespace, 'g'), "\n").replace("\n", '');
+      
+      templateElement.empty();
+
+      // return the linking function
+      return function link (scope, element, attrs) {
+
+        // evaluate the template using a scope
+        var html = angular.element(template(scope));
+        html.find('code').addClass(attrs.language).text(example);
+        html.find('div').append($compile(example)(scope));
+        element.append(html);
+      }
+    }
+  };
+});</code></pre>
+        </section>
+      </section>
+      <section>
+        <h2>Questions?</h2>
       </section>
     </div>
   </div>
