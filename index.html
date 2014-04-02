@@ -551,8 +551,7 @@ linkFn(scope);</code></pre>
           </nb-example>
         </section>
         <section>
-          <pre>
-            <code class="javascript">angular.module('presentation').directive('nbTooltip', function ($document, $compile) {
+          <pre><code class="javascript">angular.module('presentation').directive('nbTooltip', function ($document, $compile) {
   return {
     scope: true,
     link: function (scope, element, attrs) {
@@ -582,8 +581,7 @@ linkFn(scope);</code></pre>
       });
     }
   };
-});</code>
-          </pre>
+});</code></pre>
         </section>
         <section>
           <h3>Tooltip example</h3>
@@ -600,8 +598,7 @@ linkFn(scope);</code></pre>
           <p>The directive used to power the examples in this presentation</p>
         </section>
         <section>
-          <pre>
-            <code class="javascript">angular.module('directives.example', []).directive('nbExample', function ($compile) {
+          <pre><code class="javascript">angular.module('directives.example', []).directive('nbExample', function ($compile) {
   return {
 
     // create isolate scopes for examples
